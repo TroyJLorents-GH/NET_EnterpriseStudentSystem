@@ -1,0 +1,210 @@
+@page "/applications"
+@using StudentSystem.Domain.Entities
+@using StudentSystem.Web.Services
+@inject GraderApplicationApiService ApplicationService
+@inject NavigationManager Navigation
+
+<PageTitle>Grader Applications</PageTitle>
+
+<h1>Grader Applications - Term 2254</h1>
+
+<div class="search-box mb-3">
+    <div class="row">
+        <div class="col-md-4">
+            <input type="text" class="form-control" placeholder="Search by name, email, or student ID..."
+                   @bind="searchTerm" @bind:event="oninput" @onkeyup="FilterApplications" />
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" @bind="selectedProgram" @bind:after="FilterByProgram">
+                <option value="">All Programs</option>
+                @foreach (var program in uniquePrograms)
+                {
+                    <option value="@program">@program</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" @bind="selectedStatus" @bind:after="FilterApplications">
+                <option value="">All Applications</option>
+                <option value="Complete">Complete</option>
+                <option value="Incomplete">Incomplete</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100" @onclick="LoadApplications">
+                <span class="oi oi-reload"></span> Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+@if (loading)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p>Loading grader applications...</p>
+    </div>
+}
+else if (filteredApplications == null || !filteredApplications.Any())
+{
+    <div class="alert alert-info">
+        <strong>No applications found.</strong> Try a different search term or filter.
+    </div>
+}
+else
+{
+    <div class="alert alert-success">
+        <strong>Showing @filteredApplications.Count of @allApplications.Count applications</strong>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Student ID</th>
+                    <th>Degree Program</th>
+                    <th>Submitted</th>
+                    <th>Undergrad GPA</th>
+                    <th>Grad GPA</th>
+                    <th>Expected Graduation</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var application in filteredApplications)
+                {
+                    <tr>
+                        <td><strong>@application.Id</strong></td>
+                        <td>@application.FirstName @application.LastName</td>
+                        <td><a href="mailto:@application.YourASUEmailAddress">@application.YourASUEmailAddress</a></td>
+                        <td>@application.ASU10DigitID</td>
+                        <td>@application.DegreeProgram</td>
+                        <td>
+                            @if (application.Completion_time.HasValue)
+                            {
+                                <span>@application.Completion_time.Value.ToString("MM/dd/yyyy")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Not submitted</span>
+                            }
+                        </td>
+                        <td>@application.UndergraduateGPA</td>
+                        <td>@application.GraduateGPA</td>
+                        <td>@application.Expected_graduation_semester_month_year_in_mm_yyyy_format.ToString("MM/yyyy")</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" @onclick="() => ViewDetails(application.Id)">
+                                <span class="oi oi-eye"></span> View
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-3">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6>Total Applications</h6>
+                        <h3>@allApplications.Count</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6>Degree Programs</h6>
+                        <h3>@uniquePrograms.Count</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6>Completed</h6>
+                        <h3>@allApplications.Count(a => a.Completion_time.HasValue)</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6>Unique Students</h6>
+                        <h3>@allApplications.Select(a => a.ASU10DigitID).Distinct().Count()</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<MastersIAGraderApplication2254> allApplications = new();
+    private List<MastersIAGraderApplication2254> filteredApplications = new();
+    private List<string> uniquePrograms = new();
+    private string searchTerm = string.Empty;
+    private string selectedProgram = string.Empty;
+    private string selectedStatus = string.Empty;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadApplications();
+    }
+
+    private async Task LoadApplications()
+    {
+        loading = true;
+        allApplications = await ApplicationService.GetAllApplicationsAsync();
+
+        // Get unique programs for filters
+        uniquePrograms = allApplications.Select(a => a.DegreeProgram).Distinct().OrderBy(p => p).ToList();
+
+        filteredApplications = allApplications;
+        loading = false;
+    }
+
+    private void FilterApplications()
+    {
+        filteredApplications = allApplications.Where(a =>
+            (string.IsNullOrWhiteSpace(searchTerm) ||
+             a.FirstName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             a.LastName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             a.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             a.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             a.YourASUEmailAddress.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             a.ASU10DigitID.ToString().Contains(searchTerm)) &&
+            (string.IsNullOrWhiteSpace(selectedProgram) || a.DegreeProgram == selectedProgram) &&
+            (string.IsNullOrWhiteSpace(selectedStatus) ||
+             (selectedStatus == "Complete" && a.Completion_time.HasValue) ||
+             (selectedStatus == "Incomplete" && !a.Completion_time.HasValue))
+        ).ToList();
+    }
+
+    private async Task FilterByProgram()
+    {
+        if (!string.IsNullOrWhiteSpace(selectedProgram))
+        {
+            loading = true;
+            filteredApplications = await ApplicationService.GetApplicationsByDegreeProgram(selectedProgram);
+            loading = false;
+        }
+        else
+        {
+            FilterApplications();
+        }
+    }
+
+    private void ViewDetails(int applicationId)
+    {
+        Navigation.NavigateTo($"/applications/{applicationId}");
+    }
+}

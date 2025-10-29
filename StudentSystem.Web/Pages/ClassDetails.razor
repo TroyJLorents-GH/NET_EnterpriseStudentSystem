@@ -1,0 +1,203 @@
+@page "/classes/{ClassNum}"
+@using StudentSystem.Domain.Entities
+@using StudentSystem.Web.Services
+@inject ClassScheduleApiService ClassService
+@inject NavigationManager Navigation
+
+<PageTitle>Class Details</PageTitle>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item"><a href="/classes">Classes</a></li>
+        <li class="breadcrumb-item active">@ClassNum</li>
+    </ol>
+</nav>
+
+@if (loading)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (classSchedule == null)
+{
+    <div class="alert alert-danger">
+        <strong>Error!</strong> Class not found.
+    </div>
+    <button class="btn btn-secondary" @onclick="GoBack">
+        <span class="oi oi-arrow-left"></span> Back to Classes
+    </button>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3>@classSchedule.Subject @classSchedule.CatalogNum - Section @classSchedule.SectionNum</h3>
+                    <h5>@classSchedule.Title</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Class Information</h5>
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <th>Class Number:</th>
+                                        <td><strong>@classSchedule.ClassNum</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Subject:</th>
+                                        <td><span class="badge bg-primary">@classSchedule.Subject</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Catalog Number:</th>
+                                        <td>@classSchedule.CatalogNum</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Section:</th>
+                                        <td>@classSchedule.SectionNum</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Term:</th>
+                                        <td>@classSchedule.Term</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Session:</th>
+                                        <td>@classSchedule.Session</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Instructor & Location</h5>
+                            <table class="table table-sm">
+                                <tbody>
+                                    @if (classSchedule.InstructorID.HasValue)
+                                    {
+                                        <tr>
+                                            <th>Instructor ID:</th>
+                                            <td>@classSchedule.InstructorID</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Name:</th>
+                                            <td>
+                                                <strong>@classSchedule.InstructorFirstName @classSchedule.InstructorLastName</strong>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Email:</th>
+                                            <td>
+                                                <a href="mailto:@classSchedule.InstructorEmail">@classSchedule.InstructorEmail</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                    else
+                                    {
+                                        <tr>
+                                            <th>Instructor:</th>
+                                            <td><span class="text-muted">To Be Announced</span></td>
+                                        </tr>
+                                    }
+                                    <tr>
+                                        <th>Location:</th>
+                                        <td>@classSchedule.Location</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Campus:</th>
+                                        <td><span class="badge bg-info">@classSchedule.Campus</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Career:</th>
+                                        <td>@classSchedule.AcadCareer</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h5 class="card-title">Course Title</h5>
+                                    <p class="card-text lead">@classSchedule.Title</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-secondary" @onclick="GoBack">
+                        <span class="oi oi-arrow-left"></span> Back to Classes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5>Quick Info</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-6">Subject:</dt>
+                        <dd class="col-sm-6">@classSchedule.Subject</dd>
+
+                        <dt class="col-sm-6">Catalog #:</dt>
+                        <dd class="col-sm-6">@classSchedule.CatalogNum</dd>
+
+                        <dt class="col-sm-6">Section:</dt>
+                        <dd class="col-sm-6">@classSchedule.SectionNum</dd>
+
+                        <dt class="col-sm-6">Session:</dt>
+                        <dd class="col-sm-6">@classSchedule.Session</dd>
+
+                        <dt class="col-sm-6">Campus:</dt>
+                        <dd class="col-sm-6">@classSchedule.Campus</dd>
+                    </dl>
+                </div>
+            </div>
+
+            @if (classSchedule.InstructorID.HasValue)
+            {
+                <div class="card mt-3">
+                    <div class="card-header bg-secondary text-white">
+                        <h5>Contact Instructor</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>@classSchedule.InstructorFirstName @classSchedule.InstructorLastName</strong></p>
+                        <a href="mailto:@classSchedule.InstructorEmail" class="btn btn-primary btn-sm w-100">
+                            <span class="oi oi-envelope-closed"></span> Send Email
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string ClassNum { get; set; } = string.Empty;
+
+    private ClassSchedule2254? classSchedule;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        classSchedule = await ClassService.GetClassByNumAsync(ClassNum);
+        loading = false;
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/classes");
+    }
+}

@@ -1,0 +1,216 @@
+@page "/classes"
+@using StudentSystem.Domain.Entities
+@using StudentSystem.Web.Services
+@inject ClassScheduleApiService ClassService
+@inject NavigationManager Navigation
+
+<PageTitle>Class Schedules</PageTitle>
+
+<h1>Class Schedules - Term 2254</h1>
+
+<div class="search-box mb-3">
+    <div class="row">
+        <div class="col-md-4">
+            <input type="text" class="form-control" placeholder="Search by subject, title, or instructor..."
+                   @bind="searchTerm" @bind:event="oninput" @onkeyup="FilterClasses" />
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" @bind="selectedSubject" @bind:after="FilterBySubject">
+                <option value="">All Subjects</option>
+                @foreach (var subject in uniqueSubjects)
+                {
+                    <option value="@subject">@subject</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" @bind="selectedCampus" @bind:after="FilterClasses">
+                <option value="">All Campuses</option>
+                @foreach (var campus in uniqueCampuses)
+                {
+                    <option value="@campus">@campus</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-primary w-100" @onclick="LoadClasses">
+                <span class="oi oi-reload"></span> Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+@if (loading)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p>Loading class schedules...</p>
+    </div>
+}
+else if (filteredClasses == null || !filteredClasses.Any())
+{
+    <div class="alert alert-info">
+        <strong>No classes found.</strong> Try a different search term or filter.
+    </div>
+}
+else
+{
+    <div class="alert alert-success">
+        <strong>Showing @filteredClasses.Count of @allClasses.Count classes</strong>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Class #</th>
+                    <th>Subject</th>
+                    <th>Catalog #</th>
+                    <th>Section</th>
+                    <th>Title</th>
+                    <th>Instructor</th>
+                    <th>Term</th>
+                    <th>Session</th>
+                    <th>Location</th>
+                    <th>Campus</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var classSchedule in filteredClasses)
+                {
+                    <tr>
+                        <td><strong>@classSchedule.ClassNum</strong></td>
+                        <td><span class="badge bg-primary">@classSchedule.Subject</span></td>
+                        <td>@classSchedule.CatalogNum</td>
+                        <td>@classSchedule.SectionNum</td>
+                        <td>@classSchedule.Title</td>
+                        <td>
+                            @if (classSchedule.InstructorID.HasValue)
+                            {
+                                <div>
+                                    <strong>@classSchedule.InstructorLastName, @classSchedule.InstructorFirstName</strong>
+                                    <br />
+                                    <small><a href="mailto:@classSchedule.InstructorEmail">@classSchedule.InstructorEmail</a></small>
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="text-muted">TBA</span>
+                            }
+                        </td>
+                        <td>@classSchedule.Term</td>
+                        <td>@classSchedule.Session</td>
+                        <td>@classSchedule.Location</td>
+                        <td>@classSchedule.Campus</td>
+                        <td>
+                            <button class="btn btn-sm btn-info" @onclick="() => ViewDetails(classSchedule.ClassNum)">
+                                <span class="oi oi-eye"></span> View
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="mt-3">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6>Total Classes</h6>
+                        <h3>@allClasses.Count</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6>Unique Subjects</h6>
+                        <h3>@uniqueSubjects.Count</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6>Instructors</h6>
+                        <h3>@allClasses.Where(c => c.InstructorID.HasValue).Select(c => c.InstructorID).Distinct().Count()</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h6>Campuses</h6>
+                        <h3>@uniqueCampuses.Count</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<ClassSchedule2254> allClasses = new();
+    private List<ClassSchedule2254> filteredClasses = new();
+    private List<string> uniqueSubjects = new();
+    private List<string> uniqueCampuses = new();
+    private string searchTerm = string.Empty;
+    private string selectedSubject = string.Empty;
+    private string selectedCampus = string.Empty;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadClasses();
+    }
+
+    private async Task LoadClasses()
+    {
+        loading = true;
+        allClasses = await ClassService.GetAllClassesAsync();
+
+        // Get unique subjects and campuses for filters
+        uniqueSubjects = allClasses.Select(c => c.Subject).Distinct().OrderBy(s => s).ToList();
+        uniqueCampuses = allClasses.Select(c => c.Campus).Distinct().OrderBy(c => c).ToList();
+
+        filteredClasses = allClasses;
+        loading = false;
+    }
+
+    private void FilterClasses()
+    {
+        filteredClasses = allClasses.Where(c =>
+            (string.IsNullOrWhiteSpace(searchTerm) ||
+             c.Subject.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             c.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             c.InstructorLastName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+             c.InstructorFirstName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrWhiteSpace(selectedSubject) || c.Subject == selectedSubject) &&
+            (string.IsNullOrWhiteSpace(selectedCampus) || c.Campus == selectedCampus)
+        ).ToList();
+    }
+
+    private async Task FilterBySubject()
+    {
+        if (!string.IsNullOrWhiteSpace(selectedSubject))
+        {
+            loading = true;
+            filteredClasses = await ClassService.GetClassesBySubjectAsync(selectedSubject);
+            loading = false;
+        }
+        else
+        {
+            FilterClasses();
+        }
+    }
+
+    private void ViewDetails(string classNum)
+    {
+        Navigation.NavigateTo($"/classes/{classNum}");
+    }
+}

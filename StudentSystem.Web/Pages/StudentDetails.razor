@@ -1,0 +1,245 @@
+@page "/students/{StudentId:int}"
+@using StudentSystem.Domain.Entities
+@using StudentSystem.Web.Services
+@inject StudentApiService StudentService
+@inject NavigationManager Navigation
+
+<PageTitle>Student Details</PageTitle>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item"><a href="/students">Students</a></li>
+        <li class="breadcrumb-item active">Details</li>
+    </ol>
+</nav>
+
+@if (loading)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (student == null)
+{
+    <div class="alert alert-danger">
+        <strong>Error!</strong> Student not found.
+    </div>
+    <button class="btn btn-secondary" @onclick="GoBack">
+        <span class="oi oi-arrow-left"></span> Back to Students
+    </button>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3>@student.First_Name @student.Last_Name</h3>
+                    @if (!string.IsNullOrEmpty(student.Preferred_Primary_First_Name))
+                    {
+                        <p class="mb-0">Preferred: @student.Preferred_Primary_First_Name</p>
+                    }
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Personal Information</h5>
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <th>Student ID:</th>
+                                        <td>@student.Student_ID</td>
+                                    </tr>
+                                    <tr>
+                                        <th>ASUrite:</th>
+                                        <td>@student.ASUrite</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Email:</th>
+                                        <td><a href="mailto:@student.ASU_Email_Adress">@student.ASU_Email_Adress</a></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Campus:</th>
+                                        <td>@student.Campus</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Academic Information</h5>
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <th>Program:</th>
+                                        <td>@student.Acad_Prog_Descr</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Department:</th>
+                                        <td>@student.Acad_Org</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Degree:</th>
+                                        <td>@student.Degree - @student.Plan_Descr</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Career:</th>
+                                        <td>@student.Acad_Career</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Status:</th>
+                                        <td>
+                                            <span class="badge @GetStatusBadgeClass(student.Prog_Status)">
+                                                @GetStatusText(student.Prog_Status)
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <h5>GPA & Performance</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card text-center">
+                                        <div class="card-body">
+                                            <h6 class="card-title">Cumulative GPA</h6>
+                                            <h2 class="display-4 @GetGpaColor(student.Cumulative_GPA)">
+                                                @student.Cumulative_GPA.ToString("F2")
+                                            </h2>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card text-center">
+                                        <div class="card-body">
+                                            <h6 class="card-title">Current GPA</h6>
+                                            <h2 class="display-4 @GetGpaColor(student.Current_GPA)">
+                                                @student.Current_GPA.ToString("F2")
+                                            </h2>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <h5>Additional Details</h5>
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <th>Academic Plan:</th>
+                                        <td>@student.Acad_Plan</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Plan Type:</th>
+                                        <td>@student.Plan_Type</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Academic Level:</th>
+                                        <td>@student.Acad_Lvl_BOT → @student.Acad_Lvl_EOT</td>
+                                    </tr>
+                                    @if (student.Term_Code.HasValue)
+                                    {
+                                        <tr>
+                                            <th>Term Code:</th>
+                                            <td>@student.Term_Code</td>
+                                        </tr>
+                                    }
+                                    @if (student.Admit_Term.HasValue)
+                                    {
+                                        <tr>
+                                            <th>Admit Term:</th>
+                                            <td>@student.Admit_Term</td>
+                                        </tr>
+                                    }
+                                    @if (!string.IsNullOrEmpty(student.Expected_Graduation_Term))
+                                    {
+                                        <tr>
+                                            <th>Expected Graduation:</th>
+                                            <td>@student.Expected_Graduation_Term</td>
+                                        </tr>
+                                    }
+                                    <tr>
+                                        <th>Dean's List:</th>
+                                        <td>@(student.Deans_List == "Y" ? "Yes" : "No")</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-secondary" @onclick="GoBack">
+                        <span class="oi oi-arrow-left"></span> Back to Students
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5>Quick Stats</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-8">Academic Group:</dt>
+                        <dd class="col-sm-4">@student.Acad_Group</dd>
+
+                        <dt class="col-sm-8">Transcript Desc:</dt>
+                        <dd class="col-sm-4"><small>@student.Transcript_Description</small></dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int StudentId { get; set; }
+
+    private StudentLookup? student;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        student = await StudentService.GetStudentByIdAsync(StudentId);
+        loading = false;
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/students");
+    }
+
+    private string GetGpaColor(double gpa)
+    {
+        return gpa >= 3.5 ? "text-success" : gpa >= 3.0 ? "text-primary" : gpa >= 2.5 ? "text-warning" : "text-danger";
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status == "AC" ? "bg-success" : "bg-secondary";
+    }
+
+    private string GetStatusText(string status)
+    {
+        return status switch
+        {
+            "AC" => "Active",
+            "IN" => "Inactive",
+            "CM" => "Completed",
+            _ => status
+        };
+    }
+}

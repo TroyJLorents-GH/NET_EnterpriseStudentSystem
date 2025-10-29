@@ -1,0 +1,276 @@
+@page "/applications/{ApplicationId:int}"
+@using StudentSystem.Domain.Entities
+@using StudentSystem.Web.Services
+@inject GraderApplicationApiService ApplicationService
+@inject NavigationManager Navigation
+
+<PageTitle>Application Details</PageTitle>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item"><a href="/applications">Applications</a></li>
+        <li class="breadcrumb-item active">Application @ApplicationId</li>
+    </ol>
+</nav>
+
+@if (loading)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (application == null)
+{
+    <div class="alert alert-danger">
+        <strong>Error!</strong> Application not found.
+    </div>
+    <button class="btn btn-secondary" @onclick="GoBack">
+        <span class="oi oi-arrow-left"></span> Back to Applications
+    </button>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3>@application.FirstName @application.LastName</h3>
+                    <h5>Application #@application.Id</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Personal Information</h5>
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <th>Name:</th>
+                                        <td><strong>@application.FirstName @application.LastName</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Email:</th>
+                                        <td><a href="mailto:@application.Email">@application.Email</a></td>
+                                    </tr>
+                                    <tr>
+                                        <th>ASU Email:</th>
+                                        <td><a href="mailto:@application.YourASUEmailAddress">@application.YourASUEmailAddress</a></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Student ID:</th>
+                                        <td><strong>@application.ASU10DigitID</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Submitted:</th>
+                                        <td>
+                                            @if (application.Completion_time.HasValue)
+                                            {
+                                                <span>@application.Completion_time.Value.ToString("MM/dd/yyyy hh:mm tt")</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">Not submitted</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Academic Information</h5>
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <th>Degree Program:</th>
+                                        <td><span class="badge bg-primary">@application.DegreeProgram</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>First Semester:</th>
+                                        <td>@application.FirstSemesterGrad</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Expected Graduation:</th>
+                                        <td>@application.Expected_graduation_semester_month_year_in_mm_yyyy_format.ToString("MM/yyyy")</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Undergrad Institution:</th>
+                                        <td>@application.UndergraduateInstitution</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Undergrad GPA:</th>
+                                        <td><strong>@application.UndergraduateGPA</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Graduate GPA:</th>
+                                        <td><strong>@application.GraduateGPA</strong></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(application.CulminatingExperienceOption))
+                    {
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Culminating Experience Option</h6>
+                                        <p class="card-text">@application.CulminatingExperienceOption</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(application.FacultyAdvisor))
+                    {
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Faculty Advisor</h6>
+                                        <p class="card-text">@application.FacultyAdvisor</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Programming Languages</h6>
+                                    <p class="card-text">@application.ProgrammingLanguages</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(application.ExperienceSummary))
+                    {
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Experience Summary</h6>
+                                        <p class="card-text">@application.ExperienceSummary</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(application.PreferredCourses))
+                    {
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Preferred Courses</h6>
+                                        <p class="card-text">@application.PreferredCourses</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-secondary" @onclick="GoBack">
+                        <span class="oi oi-arrow-left"></span> Back to Applications
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5>Application Status</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-6">Status:</dt>
+                        <dd class="col-sm-6">
+                            @if (application.Completion_time.HasValue)
+                            {
+                                <span class="badge bg-success">Complete</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning">Incomplete</span>
+                            }
+                        </dd>
+
+                        @if (!string.IsNullOrWhiteSpace(application.PositionsConsidered))
+                        {
+                            <dt class="col-sm-6">Positions:</dt>
+                            <dd class="col-sm-6">@application.PositionsConsidered</dd>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(application.HoursAvailable))
+                        {
+                            <dt class="col-sm-6">Hours Available:</dt>
+                            <dd class="col-sm-6">@application.HoursAvailable</dd>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(application.TASpeakTestScoreOrIBT))
+                        {
+                            <dt class="col-sm-6">TA Speak Test:</dt>
+                            <dd class="col-sm-6">@application.TASpeakTestScoreOrIBT</dd>
+                        }
+
+                        <dt class="col-sm-6">Agreement:</dt>
+                        <dd class="col-sm-6">@application.IAgree</dd>
+                    </dl>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(application.TranscriptUrl) || !string.IsNullOrWhiteSpace(application.ResumeUrl))
+            {
+                <div class="card mt-3">
+                    <div class="card-header bg-secondary text-white">
+                        <h5>Documents</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (!string.IsNullOrWhiteSpace(application.TranscriptUrl))
+                        {
+                            <a href="@application.TranscriptUrl" target="_blank" class="btn btn-primary btn-sm w-100 mb-2">
+                                <span class="oi oi-document"></span> View Transcript
+                            </a>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(application.ResumeUrl))
+                        {
+                            <a href="@application.ResumeUrl" target="_blank" class="btn btn-primary btn-sm w-100">
+                                <span class="oi oi-document"></span> View Resume
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int ApplicationId { get; set; }
+
+    private MastersIAGraderApplication2254? application;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        application = await ApplicationService.GetApplicationByIdAsync(ApplicationId);
+        loading = false;
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/applications");
+    }
+}
