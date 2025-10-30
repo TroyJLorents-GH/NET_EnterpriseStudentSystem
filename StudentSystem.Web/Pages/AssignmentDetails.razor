@@ -1,0 +1,504 @@
+@page "/assignments/{AssignmentId:int}"
+@using StudentSystem.Domain.Entities
+@using StudentSystem.Web.Services
+@inject AssignmentApiService AssignmentService
+@inject NavigationManager Navigation
+
+<PageTitle>Assignment Details</PageTitle>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item"><a href="/assignments">Assignments</a></li>
+        <li class="breadcrumb-item active">Assignment @AssignmentId</li>
+    </ol>
+</nav>
+
+@if (loading)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if (assignment == null)
+{
+    <div class="alert alert-danger">
+        <strong>Error!</strong> Assignment not found.
+    </div>
+    <button class="btn btn-secondary" @onclick="GoBack">
+        <span class="oi oi-arrow-left"></span> Back to Assignments
+    </button>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3>@assignment.First_Name @assignment.Last_Name - @assignment.Position</h3>
+                    <h5>@assignment.Subject @assignment.CatalogNum - Section @assignment.ClassSession</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Student Information</h5>
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <th>Name:</th>
+                                        <td><strong>@assignment.First_Name @assignment.Last_Name</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Student ID:</th>
+                                        <td>@assignment.Student_ID</td>
+                                    </tr>
+                                    <tr>
+                                        <th>ASUrite:</th>
+                                        <td>@assignment.ASUrite</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Email:</th>
+                                        <td><a href="mailto:@assignment.Email">@assignment.Email</a></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Education Level:</th>
+                                        <td>@assignment.EducationLevel</td>
+                                    </tr>
+                                    @if (assignment.cur_gpa.HasValue)
+                                    {
+                                        <tr>
+                                            <th>Current GPA:</th>
+                                            <td><strong>@assignment.cur_gpa.Value.ToString("F2")</strong></td>
+                                        </tr>
+                                    }
+                                    @if (assignment.cum_gpa.HasValue)
+                                    {
+                                        <tr>
+                                            <th>Cumulative GPA:</th>
+                                            <td><strong>@assignment.cum_gpa.Value.ToString("F2")</strong></td>
+                                        </tr>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(assignment.FultonFellow))
+                                    {
+                                        <tr>
+                                            <th>Fulton Fellow:</th>
+                                            <td><span class="badge bg-warning text-dark">@assignment.FultonFellow</span></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Assignment Details</h5>
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr>
+                                        <th>Position:</th>
+                                        <td><span class="badge bg-primary">@assignment.Position</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Position Number:</th>
+                                        <td>
+                                            @if (editingPositionNumber)
+                                            {
+                                                <div class="input-group input-group-sm">
+                                                    <input type="text" class="form-control" @bind="editedPositionNumber" />
+                                                    <button class="btn btn-success btn-sm" @onclick="SavePositionNumber" disabled="@saving">
+                                                        @if (saving)
+                                                        {
+                                                            <span class="spinner-border spinner-border-sm" role="status"></span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="oi oi-check"></span>
+                                                        }
+                                                    </button>
+                                                    <button class="btn btn-secondary btn-sm" @onclick="CancelEdit">
+                                                        <span class="oi oi-x"></span>
+                                                    </button>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span>@(assignment.Position_Number ?? "Not set")</span>
+                                                <button class="btn btn-sm btn-link" @onclick="EnableEditPositionNumber">
+                                                    <span class="oi oi-pencil"></span> Edit
+                                                </button>
+                                            }
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Weekly Hours:</th>
+                                        <td><strong>@assignment.WeeklyHours hours</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Compensation:</th>
+                                        <td><strong>$@assignment.Compensation.ToString("N2")</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Term:</th>
+                                        <td>@assignment.Term</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Campus:</th>
+                                        <td><span class="badge bg-info">@assignment.Campus</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Location:</th>
+                                        <td>@assignment.Location</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Academic Career:</th>
+                                        <td>@assignment.AcadCareer</td>
+                                    </tr>
+                                    @if (!string.IsNullOrWhiteSpace(assignment.CostCenterKey))
+                                    {
+                                        <tr>
+                                            <th>Cost Center:</th>
+                                            <td>@assignment.CostCenterKey</td>
+                                        </tr>
+                                    }
+                                    @if (assignment.CreatedAt.HasValue)
+                                    {
+                                        <tr>
+                                            <th>Created:</th>
+                                            <td>@assignment.CreatedAt.Value.ToString("MM/dd/yyyy")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Class Information</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p><strong>Subject:</strong> @assignment.Subject</p>
+                                            <p><strong>Catalog Number:</strong> @assignment.CatalogNum</p>
+                                            <p><strong>Class Number:</strong> @assignment.ClassNum</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Session:</strong> @assignment.ClassSession</p>
+                                            <p><strong>Instructor:</strong> @assignment.InstructorFirstName @assignment.InstructorLastName</p>
+                                            @if (assignment.InstructorID.HasValue)
+                                            {
+                                                <p><strong>Instructor ID:</strong> @assignment.InstructorID</p>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(saveMessage))
+                    {
+                        <div class="alert @(saveSuccess ? "alert-success" : "alert-danger") mt-3">
+                            @saveMessage
+                        </div>
+                    }
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-secondary" @onclick="GoBack">
+                        <span class="oi oi-arrow-left"></span> Back to Assignments
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5>Documentation Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>Offer Sent:</strong>
+                            <button class="btn btn-sm @(assignment.Offer_Sent == true ? "btn-success" : "btn-secondary")"
+                                    @onclick="() => ToggleOfferSent()" disabled="@saving">
+                                @if (saving && fieldBeingSaved == "OfferSent")
+                                {
+                                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                                }
+                                else
+                                {
+                                    <span>@(assignment.Offer_Sent == true ? "Yes ✓" : "No")</span>
+                                }
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>Offer Signed:</strong>
+                            <button class="btn btn-sm @(assignment.Offer_Signed == true ? "btn-success" : "btn-secondary")"
+                                    @onclick="() => ToggleOfferSigned()" disabled="@saving">
+                                @if (saving && fieldBeingSaved == "OfferSigned")
+                                {
+                                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                                }
+                                else
+                                {
+                                    <span>@(assignment.Offer_Signed == true ? "Yes ✓" : "No")</span>
+                                }
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>SSN Sent:</strong>
+                            <button class="btn btn-sm @(assignment.SSN_Sent == true ? "btn-success" : "btn-secondary")"
+                                    @onclick="() => ToggleSSNSent()" disabled="@saving">
+                                @if (saving && fieldBeingSaved == "SSNSent")
+                                {
+                                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                                }
+                                else
+                                {
+                                    <span>@(assignment.SSN_Sent == true ? "Yes ✓" : "No")</span>
+                                }
+                            </button>
+                        </div>
+                    </div>
+
+                    @{
+                        var totalDocs = 3;
+                        var completedDocs = 0;
+                        if (assignment.Offer_Sent == true) completedDocs++;
+                        if (assignment.Offer_Signed == true) completedDocs++;
+                        if (assignment.SSN_Sent == true) completedDocs++;
+                        var progress = (completedDocs * 100.0) / totalDocs;
+                        var isFullySigned = assignment.Offer_Sent == true && assignment.Offer_Signed == true && assignment.SSN_Sent == true;
+                    }
+
+                    <div class="mt-3">
+                        <strong>Status: </strong>
+                        @if (isFullySigned)
+                        {
+                            <span class="badge bg-success">Signed</span>
+                        }
+                        else if (assignment.Offer_Sent == true)
+                        {
+                            <span class="badge bg-info">In Progress</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Pending</span>
+                        }
+                    </div>
+
+                    <div class="mt-3">
+                        <strong>Completion Progress:</strong>
+                        <div class="progress mt-2">
+                            <div class="progress-bar @(progress == 100 ? "bg-success" : "bg-info")"
+                                 role="progressbar"
+                                 style="width: @progress%"
+                                 aria-valuenow="@progress"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                                @completedDocs/@totalDocs
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(assignment.Instructor_Edit))
+            {
+                <div class="card mt-3">
+                    <div class="card-header bg-warning text-dark">
+                        <h5>Instructor Notes</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>@assignment.Instructor_Edit</p>
+                    </div>
+                </div>
+            }
+
+            <div class="card mt-3">
+                <div class="card-header bg-info text-white">
+                    <h5>Summary</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Total Weekly Hours:</strong> @assignment.WeeklyHours</p>
+                    <p><strong>Compensation:</strong> $@assignment.Compensation.ToString("N2")</p>
+                    <p><strong>Position:</strong> @assignment.Position</p>
+                    @if (assignment.cur_gpa.HasValue)
+                    {
+                        <p><strong>Current GPA:</strong> @assignment.cur_gpa.Value.ToString("F2")</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int AssignmentId { get; set; }
+
+    private StudentClassAssignment? assignment;
+    private bool loading = true;
+    private bool editingPositionNumber = false;
+    private string? editedPositionNumber;
+    private bool saving = false;
+    private string? saveMessage;
+    private bool saveSuccess;
+    private string? fieldBeingSaved;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        assignment = await AssignmentService.GetAssignmentByIdAsync(AssignmentId);
+        loading = false;
+    }
+
+    private void EnableEditPositionNumber()
+    {
+        editingPositionNumber = true;
+        editedPositionNumber = assignment?.Position_Number;
+        saveMessage = null;
+    }
+
+    private void CancelEdit()
+    {
+        editingPositionNumber = false;
+        editedPositionNumber = null;
+        saveMessage = null;
+    }
+
+    private async Task SavePositionNumber()
+    {
+        if (assignment == null) return;
+
+        saving = true;
+        saveMessage = null;
+
+        assignment.Position_Number = editedPositionNumber;
+        var success = await AssignmentService.UpdateAssignmentAsync(assignment.Id, assignment);
+
+        if (success)
+        {
+            editingPositionNumber = false;
+            saveMessage = "Position Number updated successfully!";
+            saveSuccess = true;
+        }
+        else
+        {
+            saveMessage = "Failed to update Position Number. Please try again.";
+            saveSuccess = false;
+        }
+
+        saving = false;
+
+        // Clear message after 3 seconds
+        await Task.Delay(3000);
+        saveMessage = null;
+    }
+
+    private async Task ToggleOfferSent()
+    {
+        if (assignment == null) return;
+
+        fieldBeingSaved = "OfferSent";
+        saving = true;
+        saveMessage = null;
+
+        assignment.Offer_Sent = !(assignment.Offer_Sent ?? false);
+        var success = await AssignmentService.UpdateAssignmentAsync(assignment.Id, assignment);
+
+        if (success)
+        {
+            saveMessage = "Offer Sent status updated!";
+            saveSuccess = true;
+        }
+        else
+        {
+            assignment.Offer_Sent = !assignment.Offer_Sent; // Revert on failure
+            saveMessage = "Failed to update status.";
+            saveSuccess = false;
+        }
+
+        saving = false;
+        fieldBeingSaved = null;
+
+        // Clear message after 2 seconds
+        await Task.Delay(2000);
+        saveMessage = null;
+    }
+
+    private async Task ToggleOfferSigned()
+    {
+        if (assignment == null) return;
+
+        fieldBeingSaved = "OfferSigned";
+        saving = true;
+        saveMessage = null;
+
+        assignment.Offer_Signed = !(assignment.Offer_Signed ?? false);
+        var success = await AssignmentService.UpdateAssignmentAsync(assignment.Id, assignment);
+
+        if (success)
+        {
+            saveMessage = "Offer Signed status updated!";
+            saveSuccess = true;
+        }
+        else
+        {
+            assignment.Offer_Signed = !assignment.Offer_Signed; // Revert on failure
+            saveMessage = "Failed to update status.";
+            saveSuccess = false;
+        }
+
+        saving = false;
+        fieldBeingSaved = null;
+
+        // Clear message after 2 seconds
+        await Task.Delay(2000);
+        saveMessage = null;
+    }
+
+    private async Task ToggleSSNSent()
+    {
+        if (assignment == null) return;
+
+        fieldBeingSaved = "SSNSent";
+        saving = true;
+        saveMessage = null;
+
+        assignment.SSN_Sent = !(assignment.SSN_Sent ?? false);
+        var success = await AssignmentService.UpdateAssignmentAsync(assignment.Id, assignment);
+
+        if (success)
+        {
+            saveMessage = "SSN Sent status updated!";
+            saveSuccess = true;
+        }
+        else
+        {
+            assignment.SSN_Sent = !assignment.SSN_Sent; // Revert on failure
+            saveMessage = "Failed to update status.";
+            saveSuccess = false;
+        }
+
+        saving = false;
+        fieldBeingSaved = null;
+
+        // Clear message after 2 seconds
+        await Task.Delay(2000);
+        saveMessage = null;
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/assignments");
+    }
+}

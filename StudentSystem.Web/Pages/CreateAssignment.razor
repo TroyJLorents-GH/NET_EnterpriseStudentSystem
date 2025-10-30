@@ -1,0 +1,267 @@
+@page "/assignments/create"
+@using StudentSystem.Domain.Entities
+@using StudentSystem.Web.Services
+@inject AssignmentApiService AssignmentService
+@inject NavigationManager Navigation
+
+<PageTitle>Create Assignment</PageTitle>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Home</a></li>
+        <li class="breadcrumb-item"><a href="/assignments">Assignments</a></li>
+        <li class="breadcrumb-item active">Create New</li>
+    </ol>
+</nav>
+
+<h1>Create New Assignment</h1>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h4>Assignment Information</h4>
+    </div>
+    <div class="card-body">
+        <EditForm Model="@newAssignment" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Student Information</h5>
+
+                    <div class="mb-3">
+                        <label class="form-label">Student ID</label>
+                        <InputNumber class="form-control" @bind-Value="newAssignment.Student_ID" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">ASUrite</label>
+                        <InputText class="form-control" @bind-Value="newAssignment.ASUrite" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">First Name</label>
+                        <InputText class="form-control" @bind-Value="newAssignment.First_Name" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Last Name</label>
+                        <InputText class="form-control" @bind-Value="newAssignment.Last_Name" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <InputText class="form-control" @bind-Value="newAssignment.Email" type="email" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Education Level</label>
+                        <InputText class="form-control" @bind-Value="newAssignment.EducationLevel" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Fulton Fellow</label>
+                        <InputSelect class="form-select" @bind-Value="newAssignment.FultonFellow">
+                            <option value="">Select...</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </InputSelect>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Current GPA</label>
+                        <InputNumber class="form-control" @bind-Value="newAssignment.cur_gpa" step="0.01" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Cumulative GPA</label>
+                        <InputNumber class="form-control" @bind-Value="newAssignment.cum_gpa" step="0.01" />
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <h5>Assignment Details</h5>
+
+                    <div class="mb-3">
+                        <label class="form-label">Position *</label>
+                        <InputText class="form-control" @bind-Value="newAssignment.Position" placeholder="e.g., TA, Grader, Tutor" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Weekly Hours</label>
+                        <InputNumber class="form-control" @bind-Value="newAssignment.WeeklyHours" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Compensation ($)</label>
+                        <InputNumber class="form-control" @bind-Value="newAssignment.Compensation" step="0.01" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Term *</label>
+                        <InputText class="form-control" @bind-Value="newAssignment.Term" placeholder="e.g., 2254" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Subject</label>
+                        <InputText class="form-control" @bind-Value="newAssignment.Subject" placeholder="e.g., CSE, SER" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Catalog Number</label>
+                        <InputNumber class="form-control" @bind-Value="newAssignment.CatalogNum" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Class Number</label>
+                        <InputText class="form-control" @bind-Value="newAssignment.ClassNum" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Class Session</label>
+                        <InputText class="form-control" @bind-Value="newAssignment.ClassSession" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Instructor First Name</label>
+                        <InputText class="form-control" @bind-Value="newAssignment.InstructorFirstName" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Instructor Last Name</label>
+                        <InputText class="form-control" @bind-Value="newAssignment.InstructorLastName" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Instructor ID</label>
+                        <InputNumber class="form-control" @bind-Value="newAssignment.InstructorID" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Campus</label>
+                        <InputText class="form-control" @bind-Value="newAssignment.Campus" placeholder="e.g., TEMPE" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Location</label>
+                        <InputText class="form-control" @bind-Value="newAssignment.Location" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h5>Documentation Status</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="offerSent" @bind="offerSent" />
+                                <label class="form-check-label" for="offerSent">Offer Sent</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="offerSigned" @bind="offerSigned" />
+                                <label class="form-check-label" for="offerSigned">Offer Signed</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="ssnSent" @bind="ssnSent" />
+                                <label class="form-check-label" for="ssnSent">SSN Sent</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="alert alert-danger mt-3">
+                    @errorMessage
+                </div>
+            }
+
+            @if (submitting)
+            {
+                <div class="mt-3">
+                    <div class="spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">Saving...</span>
+                    </div>
+                    Saving assignment...
+                </div>
+            }
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary" disabled="@submitting">
+                    <span class="oi oi-check"></span> Create Assignment
+                </button>
+                <button type="button" class="btn btn-secondary ms-2" @onclick="Cancel">
+                    <span class="oi oi-x"></span> Cancel
+                </button>
+            </div>
+
+            <ValidationSummary />
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private StudentClassAssignment newAssignment = new StudentClassAssignment
+    {
+        Term = "2254",
+        CreatedAt = DateTime.Now
+    };
+    private bool submitting = false;
+    private string? errorMessage;
+
+    // Wrapper properties for nullable bool checkboxes
+    private bool offerSent
+    {
+        get => newAssignment.Offer_Sent ?? false;
+        set => newAssignment.Offer_Sent = value;
+    }
+
+    private bool offerSigned
+    {
+        get => newAssignment.Offer_Signed ?? false;
+        set => newAssignment.Offer_Signed = value;
+    }
+
+    private bool ssnSent
+    {
+        get => newAssignment.SSN_Sent ?? false;
+        set => newAssignment.SSN_Sent = value;
+    }
+
+    private async Task HandleSubmit()
+    {
+        submitting = true;
+        errorMessage = null;
+
+        try
+        {
+            var result = await AssignmentService.CreateAssignmentAsync(newAssignment);
+            if (result != null)
+            {
+                Navigation.NavigateTo("/assignments");
+            }
+            else
+            {
+                errorMessage = "Failed to create assignment. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/assignments");
+    }
+}

@@ -36,6 +36,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IStudentRepository, EFStudentRepository>();
 builder.Services.AddScoped<IClassScheduleRepository, EFClassScheduleRepository>();
 builder.Services.AddScoped<IGraderApplicationRepository, EFGraderApplicationRepository>();
+builder.Services.AddScoped<IAssignmentRepository, EFAssignmentRepository>();
 // Alternative: builder.Services.AddScoped<IStudentRepository, DapperStudentRepository>();
 // Alternative: builder.Services.AddScoped<IStudentRepository, AdoStudentRepository>();
 
