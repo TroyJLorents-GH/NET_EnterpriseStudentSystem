@@ -6,7 +6,7 @@
 
 <PageTitle>Student Class Assignments</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-evenly align-items-center mb-3">
     <h1>Student Class Assignments</h1>
     <div>
         @if (selectedAssignments.Any())
@@ -30,7 +30,7 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex justify-content-evenly align-items-center mb-2">
                         <strong>Offer Sent:</strong>
                         <button class="btn btn-sm btn-success" @onclick="BulkUpdateOfferSent" disabled="@bulkUpdating">
                             Set to Yes
@@ -38,7 +38,7 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex justify-content-evenly align-items-center mb-2">
                         <strong>Offer Signed:</strong>
                         <button class="btn btn-sm btn-success" @onclick="BulkUpdateOfferSigned" disabled="@bulkUpdating">
                             Set to Yes
@@ -46,7 +46,7 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex justify-content-evenly align-items-center mb-2">
                         <strong>SSN Sent:</strong>
                         <button class="btn btn-sm btn-success" @onclick="BulkUpdateSSNSent" disabled="@bulkUpdating">
                             Set to Yes
