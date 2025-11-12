@@ -36,6 +36,6 @@ jobs:
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: 'studentsystem-api-bgdtdfgfdrebh4bw'
+        app-name: 'studentsystem-api'
         publish-profile: ${{ secrets.AZURE_API_PUBLISH_PROFILE }}
         package: ./api-publish
