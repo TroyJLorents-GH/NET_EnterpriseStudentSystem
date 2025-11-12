@@ -35,6 +35,6 @@ jobs:
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: 'studentsystem-web-cwc6dec2f3afg4d7'
+        app-name: 'studentsystem-web'
         publish-profile: ${{ secrets.AZURE_WEB_PUBLISH_PROFILE }}
         package: ./web-publish
